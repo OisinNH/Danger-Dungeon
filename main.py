@@ -15,17 +15,18 @@ import random
 # --- Global constants ---
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+BEIGE = (191, 175, 126)
 
-SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 500
-
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 
 # --- Classes ---
 
 
-class Block(pygame.sprite.Sprite):
+class Enemy(pygame.sprite.Sprite):
     """ This class represents a simple block the player collects. """
 
     def __init__(self):
@@ -34,19 +35,22 @@ class Block(pygame.sprite.Sprite):
         self.image = pygame.Surface([20, 20])
         self.image.fill(BLACK)
         self.rect = self.image.get_rect()
+        self.health = 100
+        self.ranged = False
 
-    def reset_pos(self):
-        """ Called when the block is 'collected' or falls off
-            the screen. """
-        self.rect.y = random.randrange(-300, -20)
-        self.rect.x = random.randrange(SCREEN_WIDTH)
+class Enemy_Ranged(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.ranged = True
 
-    def update(self):
-        """ Automatically called when we need to move the block. """
-        self.rect.y += 1
+    def shoot(self):
+        self.bullet = Bullet()
 
-        if self.rect.y > SCREEN_HEIGHT + self.rect.height:
-            self.reset_pos()
+class Enemy_Melee(Enemy):
+    def __init__(self):
+        super().__init__()
+
+
 
 
 class Character(pygame.sprite.Sprite):
@@ -57,12 +61,41 @@ class Character(pygame.sprite.Sprite):
         self.image = pygame.Surface([20, 20])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
+        self.health = 100
+        self.attack_modifier = 1
+        self.strength_modifier = 1
+    def update(self, x, y):
+        self.rect.x += x
+        self.rect.y += y
+
+class Pointer(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([20, 20])
+        self.rect = self.image.get_rect(center=[x, y])
+
+        self.image = pygame.image.load("pointer.png")
+        self.rect.center = (self.rect.centerx, self.rect.centery)
 
     def update(self):
         """ Update the player location. """
         pos = pygame.mouse.get_pos()
-        self.rect.x = pos[0]
-        self.rect.y = pos[1]
+        self.rect.centerx = pos[0]
+        self.rect.centery = pos[1]
+
+class Collectable(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([40, 40])
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect()
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface([20, 20])
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect()
 
 
 class Game(object):
@@ -78,22 +111,29 @@ class Game(object):
         self.game_over = False
 
         # Create sprite lists
-        self.block_list = pygame.sprite.Group()
+        self.enemy_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
 
         # Create the block sprites
-        for i in range(50):
-            block = Block()
+        for i in range(10):
+            enemy = Enemy()
 
-            block.rect.x = random.randrange(SCREEN_WIDTH)
-            block.rect.y = random.randrange(-300, SCREEN_HEIGHT)
+            enemy.rect.x = random.randrange(SCREEN_WIDTH)
+            enemy.rect.y = random.randrange(-300, SCREEN_HEIGHT)
 
-            self.block_list.add(block)
-            self.all_sprites_list.add(block)
+            self.enemy_list.add(enemy)
+            self.all_sprites_list.add(enemy)
 
-        # Create the player
+        # Create the playerwa
         self.character = Character()
         self.all_sprites_list.add(self.character)
+        #Create Player Speed
+        self.speed_x = 0
+        self.speed_y = 0
+
+        #Create Pointer
+        self.pointer = Pointer(960, 540)
+        self.all_sprites_list.add(self.pointer)
 
     def process_events(self):
         """ Process all of the events. Return a "True" if we need
@@ -105,6 +145,27 @@ class Game(object):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.game_over:
                     self.__init__()
+            # Player movement
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_d:
+                    self.speed_x += 1
+                if event.key == pygame.K_a:
+                    self.speed_x -= 1
+                if event.key == pygame.K_w:
+                    self.speed_y -= 1
+                if event.key == pygame.K_s:
+                    self.speed_y += 1
+            # Removing the movement when letting go
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_d:
+                    self.speed_x -= 1
+                if event.key == pygame.K_a:
+                    self.speed_x += 1
+                if event.key == pygame.K_w:
+                    self.speed_y += 1
+                if event.key == pygame.K_s:
+                    self.speed_y -= 1
+
 
         return False
 
@@ -114,11 +175,11 @@ class Game(object):
         updates positions and checks for collisions.
         """
         if not self.game_over:
-            # Move all the sprites
-            self.all_sprites_list.update()
+           # Move all the sprites
+           # self.all_sprites_list.update()
 
             # See if the player block has collided with anything.
-            blocks_hit_list = pygame.sprite.spritecollide(self.character, self.block_list, True)
+            blocks_hit_list = pygame.sprite.spritecollide(self.bullet, self.enemy_list, True)
 
             # Check the list of collisions.
             for block in blocks_hit_list:
@@ -126,12 +187,17 @@ class Game(object):
                 print(self.score)
                 # You can do something with "block" here.
 
-            if len(self.block_list) == 0:
+            if len(self.enemy_list) == 0:
                 self.game_over = True
+
+            self.character.update(self.speed_x, self.speed_y)
+            self.pointer.update()
+
+
 
     def display_frame(self, screen):
         """ Display everything to the screen for the game. """
-        screen.fill(WHITE)
+        screen.fill(BEIGE)
 
         if self.game_over:
             # font = pygame.font.Font("Serif", 25)
@@ -143,6 +209,7 @@ class Game(object):
 
         if not self.game_over:
             self.all_sprites_list.draw(screen)
+            pygame.draw.aaline(screen, GREEN, [self.character.rect.centerx, self.character.rect.centery], [(self.pointer.rect.x) + 20, (self.pointer.rect.y) + 20], 5)
 
         pygame.display.flip()
 
@@ -177,7 +244,7 @@ def main():
         game.display_frame(screen)
 
         # Pause for the next frame
-        clock.tick(60)
+        clock.tick(144)
 
     # Close window and exit
     pygame.quit()
