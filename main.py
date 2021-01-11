@@ -10,6 +10,7 @@ Explanation video: http://youtu.be/O4Y5KrNgP_c
 """
 
 import pygame
+import shapely
 import random
 
 # --- Global constants ---
@@ -19,9 +20,11 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BEIGE = (191, 175, 126)
+BULLET_TRAVEL = 5
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
+
 
 # --- Classes ---
 
@@ -38,19 +41,16 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 100
         self.ranged = False
 
-class Enemy_Ranged(Enemy):
+
+class EnemyRanged(Enemy):
     def __init__(self):
         super().__init__()
         self.ranged = True
 
-    def shoot(self):
-        self.bullet = Bullet()
 
-class Enemy_Melee(Enemy):
+class EnemyMelee(Enemy):
     def __init__(self):
         super().__init__()
-
-
 
 
 class Character(pygame.sprite.Sprite):
@@ -64,9 +64,15 @@ class Character(pygame.sprite.Sprite):
         self.health = 100
         self.attack_modifier = 1
         self.strength_modifier = 1
+
+    def shoot(self, x, y, target_x, target_y):
+        self.bullet = Bullet(x, y, target_x, target_y)
+
+
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
+
 
 class Pointer(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -83,6 +89,7 @@ class Pointer(pygame.sprite.Sprite):
         self.rect.centerx = pos[0]
         self.rect.centery = pos[1]
 
+
 class Collectable(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -90,12 +97,20 @@ class Collectable(pygame.sprite.Sprite):
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
 
+
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, x, y, target_x, target_y):
         super().__init__()
-        self.image = pygame.Surface([20, 20])
+        self.image = pygame.Surface([5, 10])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        pointer_x = target_x
+        pointer_y = target_y
+        bullet_range = 
+
+
 
 
 class Game(object):
@@ -113,6 +128,7 @@ class Game(object):
         # Create sprite lists
         self.enemy_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
+        self.bullet_list = pygame.sprite.Group()
 
         # Create the block sprites
         for i in range(10):
@@ -127,11 +143,11 @@ class Game(object):
         # Create the playerwa
         self.character = Character()
         self.all_sprites_list.add(self.character)
-        #Create Player Speed
+        # Create Player Speed
         self.speed_x = 0
         self.speed_y = 0
 
-        #Create Pointer
+        # Create Pointer
         self.pointer = Pointer(960, 540)
         self.all_sprites_list.add(self.pointer)
 
@@ -145,6 +161,10 @@ class Game(object):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.game_over:
                     self.__init__()
+                else:
+                    self.character.shoot(self.character.rect.centerx, self.character.rect.centery,
+                                         self.pointer.rect.centerx, self.pointer.rect.centery)
+                    self.bullet_list.add(self.character.bullet)
             # Player movement
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_d:
@@ -166,7 +186,6 @@ class Game(object):
                 if event.key == pygame.K_s:
                     self.speed_y -= 1
 
-
         return False
 
     def run_logic(self):
@@ -175,25 +194,24 @@ class Game(object):
         updates positions and checks for collisions.
         """
         if not self.game_over:
-           # Move all the sprites
-           # self.all_sprites_list.update()
+            # Move all the sprites
+            # self.all_sprites_list.update()
 
-            # See if the player block has collided with anything.
-            blocks_hit_list = pygame.sprite.spritecollide(self.bullet, self.enemy_list, True)
+            if self.bullet_list:
+                # See if the player bullet has collided with anything.
+                enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
 
-            # Check the list of collisions.
-            for block in blocks_hit_list:
-                self.score += 1
-                print(self.score)
-                # You can do something with "block" here.
+                # Check the list of collisions.
+                for enemy in enemies_hit_list:
+                    self.score += 1
+                    print(self.score)
+                    # You can do something with "block" here.
 
             if len(self.enemy_list) == 0:
                 self.game_over = True
 
             self.character.update(self.speed_x, self.speed_y)
             self.pointer.update()
-
-
 
     def display_frame(self, screen):
         """ Display everything to the screen for the game. """
@@ -209,7 +227,8 @@ class Game(object):
 
         if not self.game_over:
             self.all_sprites_list.draw(screen)
-            pygame.draw.aaline(screen, GREEN, [self.character.rect.centerx, self.character.rect.centery], [(self.pointer.rect.x) + 20, (self.pointer.rect.y) + 20], 5)
+            pygame.draw.aaline(screen, GREEN, [self.character.rect.centerx, self.character.rect.centery],
+                               [self.pointer.rect.x + 20, self.pointer.rect.y + 20], 5)
 
         pygame.display.flip()
 
