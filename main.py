@@ -12,6 +12,7 @@ Explanation video: http://youtu.be/O4Y5KrNgP_c
 import pygame
 import shapely
 import random
+from shapely.geometry import LineString
 
 # --- Global constants ---
 BLACK = (0, 0, 0)
@@ -24,7 +25,6 @@ BULLET_TRAVEL = 5
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
-
 
 # --- Classes ---
 
@@ -65,8 +65,8 @@ class Character(pygame.sprite.Sprite):
         self.attack_modifier = 1
         self.strength_modifier = 1
 
-    def shoot(self, x, y, target_x, target_y):
-        self.bullet = Bullet(x, y, target_x, target_y)
+    def shoot(self, target_x, target_y):
+        self.bullet = Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
 
 
     def update(self, x, y):
@@ -106,10 +106,14 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
-        pointer_x = target_x
-        pointer_y = target_y
-        bullet_range = 
+        self.bullet_line =  LineString([(x, y), (target_x, target_y)])
+        self.bullet_target = self.bullet_line.interpolate(5)
+        self.bullet_movement_x = self.bullet_target.x - self.rect.centerx
+        self.bullet_movement_y = self.bullet_target.y - self.rect.centery
 
+    def update(self):
+        self.rect.x += self.bullet_movement_x
+        self.rect.y += self.bullet_movement_y
 
 
 
@@ -162,9 +166,9 @@ class Game(object):
                 if self.game_over:
                     self.__init__()
                 else:
-                    self.character.shoot(self.character.rect.centerx, self.character.rect.centery,
-                                         self.pointer.rect.centerx, self.pointer.rect.centery)
+                    self.character.shoot(self.pointer.rect.centerx, self.pointer.rect.centery)
                     self.bullet_list.add(self.character.bullet)
+                    self.all_sprites_list.add(self.character.bullet)
             # Player movement
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_d:
@@ -200,6 +204,7 @@ class Game(object):
             if self.bullet_list:
                 # See if the player bullet has collided with anything.
                 enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
+                self.character.bullet.update()
 
                 # Check the list of collisions.
                 for enemy in enemies_hit_list:
@@ -229,6 +234,8 @@ class Game(object):
             self.all_sprites_list.draw(screen)
             pygame.draw.aaline(screen, GREEN, [self.character.rect.centerx, self.character.rect.centery],
                                [self.pointer.rect.x + 20, self.pointer.rect.y + 20], 5)
+        if self.bullet_list:
+            print(self.character.bullet.bullet_target.x, self.character.bullet.bullet_target.y, self.character.bullet.rect.center)
 
         pygame.display.flip()
 
