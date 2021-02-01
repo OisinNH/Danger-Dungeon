@@ -13,6 +13,8 @@ import pygame
 import shapely
 import random
 from shapely.geometry import LineString
+import pygame.freetype
+import math
 
 # --- Global constants ---
 BLACK = (0, 0, 0)
@@ -21,6 +23,7 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BEIGE = (191, 175, 126)
+GREY = (128, 128, 128)
 BULLET_TRAVEL = 5
 
 SCREEN_WIDTH = 1920
@@ -40,6 +43,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.health = 100
         self.ranged = False
+    def shoot(self, target_x, target_y):
+        self.enemy_bullet = Enemy_Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
+    def update(self)
+        self.shoot(game)
 
 
 class EnemyRanged(Enemy):
@@ -64,6 +71,8 @@ class Character(pygame.sprite.Sprite):
         self.health = 100
         self.attack_modifier = 1
         self.strength_modifier = 1
+        self.rect.x = 50
+        self.rect.y = 50
 
     def shoot(self, target_x, target_y):
         self.bullet = Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
@@ -97,19 +106,51 @@ class Collectable(pygame.sprite.Sprite):
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
 
+class Wall(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([40, 40])
+        self.image.fill(GREY)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
         super().__init__()
-        self.image = pygame.Surface([5, 10])
+        self.image = pygame.Surface([5, 5])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
-        self.rect.bottom = y
+
+        self.rect.centery = y
         self.rect.centerx = x
-        self.bullet_line =  LineString([(x, y), (target_x, target_y)])
+
+        self.bullet_line = LineString([(x, y), (target_x, target_y)])
         self.bullet_target = self.bullet_line.interpolate(5)
-        self.bullet_movement_x = self.bullet_target.x - self.rect.centerx
-        self.bullet_movement_y = self.bullet_target.y - self.rect.centery
+
+        self.bullet_movement_x = self.bullet_target.x - x
+        self.bullet_movement_y = self.bullet_target.y - y
+
+    def update(self):
+        self.rect.x += self.bullet_movement_x
+        self.rect.y += self.bullet_movement_y
+
+class Enemy_Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, target_x, target_y):
+        super().__init__()
+        self.image = pygame.Surface([5, 5])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+
+        self.rect.centery = y
+        self.rect.centerx = x
+
+        self.bullet_line = LineString([(x, y), (target_x, target_y)])
+        self.bullet_target = self.bullet_line.interpolate(5)
+
+        self.bullet_movement_x = self.bullet_target.x - x
+        self.bullet_movement_y = self.bullet_target.y - y
 
     def update(self):
         self.rect.x += self.bullet_movement_x
@@ -133,6 +174,7 @@ class Game(object):
         self.enemy_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
+        self.wall_list = pygame.sprite.Group()
 
         # Create the block sprites
         for i in range(10):
@@ -154,6 +196,27 @@ class Game(object):
         # Create Pointer
         self.pointer = Pointer(960, 540)
         self.all_sprites_list.add(self.pointer)
+
+        #Create Walls
+
+        for x in range (1881):
+            if x % 40 == 0 :
+                self.wall = Wall(x, 0)
+                self.wall_list.add(self.wall)
+                self.all_sprites_list.add(self.wall)
+                self.wall = Wall(x, 1040)
+                self.wall_list.add(self.wall)
+                self.all_sprites_list.add(self.wall)
+        for y in range (1041):
+            if y % 40 == 0 :
+                self.wall = Wall(0, y)
+                self.wall_list.add(self.wall)
+                self.all_sprites_list.add(self.wall)
+                self.wall = Wall(1880, y)
+                self.wall_list.add(self.wall)
+                self.all_sprites_list.add(self.wall)
+
+
 
     def process_events(self):
         """ Process all of the events. Return a "True" if we need
@@ -202,7 +265,7 @@ class Game(object):
             # self.all_sprites_list.update()
 
             if self.bullet_list:
-                # See if the player bullet has collided with anything.
+                # See if the player's bullet has collided with anything.
                 enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
                 self.character.bullet.update()
 
@@ -212,10 +275,24 @@ class Game(object):
                     print(self.score)
                     # You can do something with "block" here.
 
+
+            temp_character_x = self.character.rect.x
+            temp_character_y = self.character.rect.y
+            self.character.update(self.speed_x, self.speed_y)
+            wall_hit_list = pygame.sprite.spritecollide(self.character, self.wall_list, False)
+            player_enemy_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_list, False)
+            if player_enemy_hit_list:
+                self.character.health -= 5
+                self.character.rect.x = temp_character_x
+                self.character.rect.y = temp_character_y
+            if wall_hit_list:
+                self.character.rect.x = temp_character_x
+                self.character.rect.y = temp_character_y
+
             if len(self.enemy_list) == 0:
                 self.game_over = True
 
-            self.character.update(self.speed_x, self.speed_y)
+
             self.pointer.update()
 
     def display_frame(self, screen):
@@ -236,6 +313,10 @@ class Game(object):
                                [self.pointer.rect.x + 20, self.pointer.rect.y + 20], 5)
         if self.bullet_list:
             print(self.character.bullet.bullet_target.x, self.character.bullet.bullet_target.y, self.character.bullet.rect.center)
+
+        health_text = pygame.freetype.SysFont("Arial", 30)
+        health_display, _ = health_text.render("Health = " + str(self.character.health), BLACK)
+        screen.blit(health_display, (50, 1050))
 
         pygame.display.flip()
 
