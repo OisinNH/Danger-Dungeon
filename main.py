@@ -29,6 +29,7 @@ BULLET_TRAVEL = 5
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
+
 # --- Classes ---
 
 
@@ -43,10 +44,13 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.health = 100
         self.ranged = False
+
     def shoot(self, target_x, target_y):
         self.enemy_bullet = Enemy_Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
-    def update(self)
-        self.shoot(game)
+
+    def update(self):
+        self.rect.x += 0
+        # self.shoot(game)
 
 
 class EnemyRanged(Enemy):
@@ -77,7 +81,6 @@ class Character(pygame.sprite.Sprite):
     def shoot(self, target_x, target_y):
         self.bullet = Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
 
-
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
@@ -106,6 +109,7 @@ class Collectable(pygame.sprite.Sprite):
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
 
+
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -126,15 +130,34 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.centery = y
         self.rect.centerx = x
 
-        self.bullet_line = LineString([(x, y), (target_x, target_y)])
-        self.bullet_target = self.bullet_line.interpolate(5)
+        self.x_difference = target_x - x
+        self.y_difference = target_y - y
 
-        self.bullet_movement_x = self.bullet_target.x - x
-        self.bullet_movement_y = self.bullet_target.y - y
+        self.target_angle = math.atan2(self.y_difference, self.x_difference);
+        self.x_change = math.cos(self.target_angle) * BULLET_TRAVEL
+        self.y_change = math.sin(self.target_angle) * BULLET_TRAVEL
+        self.x = self.rect.x
+        self.y = self.rect.y
+
+        # self.distance = math.dist(x, y, target_x, target_y)
+        # self.distance_division = self.distance / 5
+
+    # self.bullet_line = LineString([(x, y), (target_x, target_y)])
+    # self.bullet_target = self.bullet_line.interpolate(5)
+
+    # self.bullet_movement_x = self.bullet_target.x - x
+    # self.bullet_movement_y = self.bullet_target.y - y
 
     def update(self):
-        self.rect.x += self.bullet_movement_x
-        self.rect.y += self.bullet_movement_y
+        # self.rect.x += self.bullet_movement_x
+        # self.rect.y += self.bullet_movement_y
+
+        self.x += self.x_change
+        self.y += self.y_change
+
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+
 
 class Enemy_Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
@@ -157,7 +180,6 @@ class Enemy_Bullet(pygame.sprite.Sprite):
         self.rect.y += self.bullet_movement_y
 
 
-
 class Game(object):
     """ This class represents an instance of the game. If we need to
         reset the game we'd just need to create a new instance of this
@@ -175,6 +197,8 @@ class Game(object):
         self.all_sprites_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
         self.wall_list = pygame.sprite.Group()
+        self.collectable_list = pygame.sprite.Group()
+        self.enemy_bullet_list = pygame.sprite.Group()
 
         # Create the block sprites
         for i in range(10):
@@ -185,6 +209,15 @@ class Game(object):
 
             self.enemy_list.add(enemy)
             self.all_sprites_list.add(enemy)
+
+        for i in range(4):
+            self.collectable = Collectable()
+
+            self.collectable.rect.x = random.randrange(SCREEN_WIDTH)
+            self.collectable.rect.y = random.randrange(-300, SCREEN_HEIGHT)
+
+            self.collectable_list.add(self.collectable)
+            self.all_sprites_list.add(self.collectable)
 
         # Create the playerwa
         self.character = Character()
@@ -197,18 +230,18 @@ class Game(object):
         self.pointer = Pointer(960, 540)
         self.all_sprites_list.add(self.pointer)
 
-        #Create Walls
+        # Create Walls
 
-        for x in range (1881):
-            if x % 40 == 0 :
+        for x in range(1881):
+            if x % 40 == 0:
                 self.wall = Wall(x, 0)
                 self.wall_list.add(self.wall)
                 self.all_sprites_list.add(self.wall)
                 self.wall = Wall(x, 1040)
                 self.wall_list.add(self.wall)
                 self.all_sprites_list.add(self.wall)
-        for y in range (1041):
-            if y % 40 == 0 :
+        for y in range(1041):
+            if y % 40 == 0:
                 self.wall = Wall(0, y)
                 self.wall_list.add(self.wall)
                 self.all_sprites_list.add(self.wall)
@@ -216,7 +249,7 @@ class Game(object):
                 self.wall_list.add(self.wall)
                 self.all_sprites_list.add(self.wall)
 
-
+        self.enemy_timer = 0  # Temporary thing for enemies shooting - should remove soon
 
     def process_events(self):
         """ Process all of the events. Return a "True" if we need
@@ -267,7 +300,9 @@ class Game(object):
             if self.bullet_list:
                 # See if the player's bullet has collided with anything.
                 enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
-                self.character.bullet.update()
+                for self.bullet in self.bullet_list:
+                    self.bullet.update()
+
 
                 # Check the list of collisions.
                 for enemy in enemies_hit_list:
@@ -275,12 +310,14 @@ class Game(object):
                     print(self.score)
                     # You can do something with "block" here.
 
-
             temp_character_x = self.character.rect.x
             temp_character_y = self.character.rect.y
             self.character.update(self.speed_x, self.speed_y)
+
             wall_hit_list = pygame.sprite.spritecollide(self.character, self.wall_list, False)
             player_enemy_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_list, False)
+            player_collectable_hit_list = pygame.sprite.spritecollide(self.character, self.collectable_list, False)
+
             if player_enemy_hit_list:
                 self.character.health -= 5
                 self.character.rect.x = temp_character_x
@@ -288,10 +325,24 @@ class Game(object):
             if wall_hit_list:
                 self.character.rect.x = temp_character_x
                 self.character.rect.y = temp_character_y
+            if player_collectable_hit_list:
+                player_collectable_hit_list[0].kill()
+                self.score += 10
 
             if len(self.enemy_list) == 0:
                 self.game_over = True
 
+            if self.enemy_timer == 0:
+                for self.enemy in self.enemy_list:
+                    self.enemy.shoot(self.character.rect.centerx, self.character.rect.centery)
+                    self.enemy_bullet_list.add(self.enemy.enemy_bullet)
+                    self.all_sprites_list.add(self.enemy.enemy_bullet)
+                    self.enemy_timer = 433
+
+            for self.enemy_bullet in self.enemy_bullet_list:
+                self.enemy_bullet.update()
+
+            self.enemy_timer -= 1
 
             self.pointer.update()
 
@@ -311,12 +362,16 @@ class Game(object):
             self.all_sprites_list.draw(screen)
             pygame.draw.aaline(screen, GREEN, [self.character.rect.centerx, self.character.rect.centery],
                                [self.pointer.rect.x + 20, self.pointer.rect.y + 20], 5)
-        if self.bullet_list:
-            print(self.character.bullet.bullet_target.x, self.character.bullet.bullet_target.y, self.character.bullet.rect.center)
+        # if self.bullet_list:
+        # print(self.character.bullet.bullet_target.x, self.character.bullet.bullet_target.y, self.character.bullet.rect.center)
 
         health_text = pygame.freetype.SysFont("Arial", 30)
         health_display, _ = health_text.render("Health = " + str(self.character.health), BLACK)
         screen.blit(health_display, (50, 1050))
+
+        score_text = pygame.freetype.SysFont("Arial", 30)
+        score_display, _ = score_text.render("Score = " + str(self.score), BLACK)
+        screen.blit(score_display, (300, 1050))
 
         pygame.display.flip()
 
