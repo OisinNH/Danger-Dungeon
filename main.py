@@ -45,6 +45,12 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 100
         self.ranged = False
 
+
+class EnemyRanged(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.ranged = True
+
     def shoot(self, target_x, target_y):
         self.enemy_bullet = Enemy_Bullet(self.rect.centerx, self.rect.centery, target_x, target_y)
 
@@ -53,15 +59,21 @@ class Enemy(pygame.sprite.Sprite):
         # self.shoot(game)
 
 
-class EnemyRanged(Enemy):
-    def __init__(self):
-        super().__init__()
-        self.ranged = True
-
-
 class EnemyMelee(Enemy):
     def __init__(self):
         super().__init__()
+    def hit(self):
+        self.enemy_melee_hit = EnemyMelee_Hit(self.rect.centerx, self.rect.centery)
+
+
+class EnemyMelee_Hit(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([30, 30])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
 
 
 class Character(pygame.sprite.Sprite):
@@ -194,21 +206,36 @@ class Game(object):
 
         # Create sprite lists
         self.enemy_list = pygame.sprite.Group()
+        self.enemy_ranged_list = pygame.sprite.Group()
+        self.enemy_melee_list = pygame.sprite.Group()
         self.all_sprites_list = pygame.sprite.Group()
         self.bullet_list = pygame.sprite.Group()
         self.wall_list = pygame.sprite.Group()
         self.collectable_list = pygame.sprite.Group()
         self.enemy_bullet_list = pygame.sprite.Group()
+        self.enemy_melee_hit_list = pygame.sprite.Group()
 
         # Create the block sprites
-        for i in range(10):
-            enemy = Enemy()
+        # Creating Ranged Enemies
+        for i in range(5):
+            enemy_ranged = EnemyRanged()
 
-            enemy.rect.x = random.randrange(SCREEN_WIDTH)
-            enemy.rect.y = random.randrange(-300, SCREEN_HEIGHT)
+            enemy_ranged.rect.x = random.randrange(40, 1861)
+            enemy_ranged.rect.y = random.randrange(40,1021)
 
-            self.enemy_list.add(enemy)
-            self.all_sprites_list.add(enemy)
+            self.enemy_list.add(enemy_ranged)
+            self.all_sprites_list.add(enemy_ranged)
+            self.enemy_ranged_list.add(enemy_ranged)
+
+        for i in range(5):
+            enemy_melee = EnemyMelee()
+
+            enemy_melee.rect.x = random.randrange(40, 1861)
+            enemy_melee.rect.y = random.randrange(40,1021)
+
+            self.enemy_list.add(enemy_melee)
+            self.all_sprites_list.add(enemy_melee)
+            self.enemy_melee_list.add(enemy_melee)
 
         for i in range(4):
             self.collectable = Collectable()
@@ -248,6 +275,12 @@ class Game(object):
                 self.wall = Wall(1880, y)
                 self.wall_list.add(self.wall)
                 self.all_sprites_list.add(self.wall)
+        #for x in range(1881):
+           # if x % 40 == 0:
+              #  r = random.randint(20)
+                   # if r == 0
+
+
 
         self.enemy_timer = 0  # Temporary thing for enemies shooting - should remove soon
 
@@ -296,16 +329,19 @@ class Game(object):
         if not self.game_over:
             # Move all the sprites
             # self.all_sprites_list.update()
-
+            self.enemy_melee_timer = 0
             if self.bullet_list:
                 # See if the player's bullet has collided with anything.
                 enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
                 for self.bullet in self.bullet_list:
                     self.bullet.update()
+            if self.enemy_melee_timer == 0:
+                for enemy in self.enemy_melee_hit_list:
+                    enemy.kill
 
 
                 # Check the list of collisions.
-                for enemy in enemies_hit_list:
+                for enemy_ranged in self.enemy_melee_hit_list:
                     self.score += 1
                     print(self.score)
                     # You can do something with "block" here.
@@ -317,6 +353,8 @@ class Game(object):
             wall_hit_list = pygame.sprite.spritecollide(self.character, self.wall_list, False)
             player_enemy_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_list, False)
             player_collectable_hit_list = pygame.sprite.spritecollide(self.character, self.collectable_list, False)
+            enemy_melee_hit_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_melee_hit_list, False)
+            enemy_bullet_hit_list = (pygame.sprite.spritecollide(self.character, self.enemy_bullet_list, False))
 
             if player_enemy_hit_list:
                 self.character.health -= 5
@@ -328,23 +366,42 @@ class Game(object):
             if player_collectable_hit_list:
                 player_collectable_hit_list[0].kill()
                 self.score += 10
+            if enemy_melee_hit_hit_list:
+                    self.character.health -= 5
+                    enemy_melee_hit_hit_list[0].kill()
+            if enemy_bullet_hit_list:
+                    self.character.health -= 5
+                    enemy_bullet_hit_list[0].kill()
 
             if len(self.enemy_list) == 0:
                 self.game_over = True
 
             if self.enemy_timer == 0:
-                for self.enemy in self.enemy_list:
-                    self.enemy.shoot(self.character.rect.centerx, self.character.rect.centery)
-                    self.enemy_bullet_list.add(self.enemy.enemy_bullet)
-                    self.all_sprites_list.add(self.enemy.enemy_bullet)
+                for self.enemy_ranged in self.enemy_ranged_list:
+                    self.enemy_ranged.shoot(self.character.rect.centerx, self.character.rect.centery)
+                    self.enemy_bullet_list.add(self.enemy_ranged.enemy_bullet)
+                    self.all_sprites_list.add(self.enemy_ranged.enemy_bullet)
                     self.enemy_timer = 433
+
+            if self.enemy_timer == 0:
+                for self.enemy_melee in self.enemy_melee_list:
+                    self.enemy_melee.hit()
+                    self.enemy_melee_hit_list.add(self.enemy_melee.enemy_melee_hit)
+                    self.all_sprites_list.add(self.enemy_melee.enemy_melee_hit)
+                    self.enemy_melee_timer = 50
 
             for self.enemy_bullet in self.enemy_bullet_list:
                 self.enemy_bullet.update()
 
+            #self.invincibility_timer -=1
             self.enemy_timer -= 1
+            self.enemy_melee_timer -= 1
 
             self.pointer.update()
+
+            #22.02.2021 - adding game over for health
+            if self.character.health <= 0:
+                self.game_over = True
 
     def display_frame(self, screen):
         """ Display everything to the screen for the game. """
