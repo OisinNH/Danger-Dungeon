@@ -75,6 +75,22 @@ class EnemyMelee_Hit(pygame.sprite.Sprite):
         self.rect.centerx = x
         self.rect.centery = y
 
+class TextBox(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([40, 60])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
+class TextBox_Title(TextBox):
+    def __init__(self, x, y):
+            super().__init__(x, y)
+            self.image = pygame.Surface([1250, 160])
+            self.rect = self.image.get_rect()
+            self.rect.centerx = x
+            self.rect.centery = y
 
 class Character(pygame.sprite.Sprite):
     """ This class represents the player. """
@@ -112,6 +128,13 @@ class Pointer(pygame.sprite.Sprite):
         pos = pygame.mouse.get_pos()
         self.rect.centerx = pos[0]
         self.rect.centery = pos[1]
+
+class PointerTitle(Pointer):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+
+        self.image = pygame.image.load("pointer2.png")
+
 
 
 class Collectable(pygame.sprite.Sprite):
@@ -578,22 +601,64 @@ class Game(object):
         else:
             return False
 
-def Title(screen):
-    screen.fill(BEIGE)
-    # font = pygame.font.Font("Serif", 25)
-    font = pygame.font.SysFont("Calibri", 100)
-    text = font.render("Danger Dungeon - Click to Start", True, BLACK)
-    center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
-    center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
-    screen.blit(text, [center_x, center_y])
-    pygame.display.flip()
+class Title(object):
 
-    title = False
-    while not title:
+    def __init__(self, screen):
+        screen.fill(BEIGE)
+        # font = pygame.font.Font("Serif", 25)
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Danger Dungeon - Click to Start", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
+        screen.blit(text, [center_x, center_y])
+
+        #Creating Sprite Lists
+        self.all_sprites_list = pygame.sprite.Group()
+        self.textbox_title_list = pygame.sprite.Group()
+
+        #Creating Title Box
+        self.textbox_title = TextBox_Title(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
+        #Below is commented out so text box is invisible
+        #self.all_sprites_list.add(self.textbox_title)
+        self.textbox_title_list.add(self.textbox_title)
+
+        #Creating Pointer
+        self.pointertitle = PointerTitle(960, 540)
+        self.all_sprites_list.add(self.pointertitle)
+
+
+        pygame.display.flip()
+
+
+
+    def process_events(self, screen):
+
+        screen.fill(BEIGE)
+        # font = pygame.font.Font("Serif", 25)
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Danger Dungeon - Click to Start", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
+        screen.blit(text, [center_x, center_y])
+
+        self.pointertitle.update()
+        self.all_sprites_list.draw(screen)
+        pygame.display.flip()
+
+        title_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_title_list, False)
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
-                title = True
-                return True
+                if title_click_list:
+                    return True
+                else:
+                    return False
+
+
+
+
+
+
+
 
 
 
@@ -613,10 +678,11 @@ def main():
     clock = pygame.time.Clock()
 
     #Title Screen
+    title = Title(screen)
     start = False
-
     while not start:
-        start = Title(screen)
+        start = title.process_events(screen)
+
 
     # Create an instance of the Game class
     game = Game()
