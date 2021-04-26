@@ -15,6 +15,7 @@ import random
 from shapely.geometry import LineString
 import pygame.freetype
 import math
+import pygame.mixer
 
 # --- Global constants ---
 BLACK = (0, 0, 0)
@@ -88,6 +89,14 @@ class TextBox_Title(TextBox):
     def __init__(self, x, y):
             super().__init__(x, y)
             self.image = pygame.Surface([1250, 160])
+            self.rect = self.image.get_rect()
+            self.rect.centerx = x
+            self.rect.centery = y
+
+class TextBox_Options(TextBox):
+    def __init__(self, x, y):
+            super().__init__(x, y)
+            self.image = pygame.Surface([250, 160])
             self.rect = self.image.get_rect()
             self.rect.centerx = x
             self.rect.centery = y
@@ -612,19 +621,38 @@ class Title(object):
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
         screen.blit(text, [center_x, center_y])
 
+        # Options
+        font = pygame.font.SysFont("Calibri", 50)
+        text = font.render("Options", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = 1080 - ((SCREEN_HEIGHT // 4) - (text.get_height() // 4))
+        screen.blit(text, [center_x, center_y])
+
         #Creating Sprite Lists
         self.all_sprites_list = pygame.sprite.Group()
         self.textbox_title_list = pygame.sprite.Group()
+        self.textbox_options_list = pygame.sprite.Group()
 
         #Creating Title Box
         self.textbox_title = TextBox_Title(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
         #Below is commented out so text box is invisible
         #self.all_sprites_list.add(self.textbox_title)
-        self.textbox_title_list.add(self.textbox_title)
+        self.textbox_options_list.add(self.textbox_title)
+
+        #Creating Options Box
+        self.textbox_options = TextBox_Options(SCREEN_WIDTH // 2, (1080 - SCREEN_HEIGHT // 4))
+        # Below is commented out so text box is invisible
+        self.all_sprites_list.add(self.textbox_options)
+        self.textbox_title_list.add(self.textbox_options)
 
         #Creating Pointer
         self.pointertitle = PointerTitle(960, 540)
         self.all_sprites_list.add(self.pointertitle)
+
+        #Music
+        pygame.mixer.init()
+        pygame.mixer.music.load("Title.mp3")
+        pygame.mixer.music.play(-1)
 
 
         pygame.display.flip()
@@ -634,11 +662,18 @@ class Title(object):
     def process_events(self, screen):
 
         screen.fill(BEIGE)
-        # font = pygame.font.Font("Serif", 25)
+        # Title
         font = pygame.font.SysFont("Calibri", 100)
         text = font.render("Danger Dungeon - Click to Start", True, BLACK)
         center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
+        screen.blit(text, [center_x, center_y])
+
+        #Options
+        font = pygame.font.SysFont("Calibri", 50)
+        text = font.render("Options", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = 1080 -((SCREEN_HEIGHT // 4) - (text.get_height() // 4))
         screen.blit(text, [center_x, center_y])
 
         self.pointertitle.update()
@@ -646,12 +681,25 @@ class Title(object):
         pygame.display.flip()
 
         title_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_title_list, False)
+        options_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_options_list, False)
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if title_click_list:
                     return True
+                elif options_click_list:
+                    titleoptions = self.options
                 else:
                     return False
+                
+        def options():
+            screen.fill(BEIGE)
+            # Title
+            font = pygame.font.SysFont("Calibri", 100)
+            text = font.render("Danger Dungeon - Click to Start", True, BLACK)
+            center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+            center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
+            screen.blit(text, [center_x, center_y])
+
 
 
 
