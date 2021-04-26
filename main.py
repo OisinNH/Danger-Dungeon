@@ -637,13 +637,13 @@ class Title(object):
         self.textbox_title = TextBox_Title(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
         #Below is commented out so text box is invisible
         #self.all_sprites_list.add(self.textbox_title)
-        self.textbox_options_list.add(self.textbox_title)
+        self.textbox_title_list.add(self.textbox_title)
 
         #Creating Options Box
         self.textbox_options = TextBox_Options(SCREEN_WIDTH // 2, (1080 - SCREEN_HEIGHT // 4))
         # Below is commented out so text box is invisible
         self.all_sprites_list.add(self.textbox_options)
-        self.textbox_title_list.add(self.textbox_options)
+        self.textbox_options_list.add(self.textbox_options)
 
         #Creating Pointer
         self.pointertitle = PointerTitle(960, 540)
@@ -682,23 +682,26 @@ class Title(object):
 
         title_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_title_list, False)
         options_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_options_list, False)
+
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if title_click_list:
                     return True
                 elif options_click_list:
-                    titleoptions = self.options
+                    Title.options(screen)
                 else:
                     return False
                 
-        def options():
-            screen.fill(BEIGE)
-            # Title
-            font = pygame.font.SysFont("Calibri", 100)
-            text = font.render("Danger Dungeon - Click to Start", True, BLACK)
-            center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
-            center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
-            screen.blit(text, [center_x, center_y])
+    def options(self, screen):
+        screen.fill(BEIGE)
+        # Title
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Danger Dungeon - Click to Start", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
+        screen.blit(text, [center_x, center_y])
+
+        pygame.display.flip()
 
 
 
