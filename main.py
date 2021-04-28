@@ -25,6 +25,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BEIGE = (191, 175, 126)
 GREY = (128, 128, 128)
+PURPLE = (139,0,139)
 BULLET_TRAVEL = 5
 
 SCREEN_WIDTH = 1920
@@ -46,7 +47,6 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 100
         self.ranged = False
 
-
 class EnemyRanged(Enemy):
     def __init__(self):
         super().__init__()
@@ -59,13 +59,11 @@ class EnemyRanged(Enemy):
         self.rect.x += 0
         # self.shoot(game)
 
-
 class EnemyMelee(Enemy):
     def __init__(self):
         super().__init__()
     def hit(self):
         self.enemy_melee_hit = EnemyMelee_Hit(self.rect.centerx, self.rect.centery)
-
 
 class EnemyMelee_Hit(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -122,7 +120,6 @@ class Character(pygame.sprite.Sprite):
         self.rect.x += x
         self.rect.y += y
 
-
 class Pointer(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -144,15 +141,12 @@ class PointerTitle(Pointer):
 
         self.image = pygame.image.load("pointer2.png")
 
-
-
 class Collectable(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.Surface([40, 40])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
-
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -163,6 +157,14 @@ class Wall(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+class Portal(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([40, 40])
+        self.image.fill(PURPLE)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
@@ -202,7 +204,6 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
-
 class Enemy_Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
         super().__init__()
@@ -232,7 +233,9 @@ class Game(object):
     def __init__(self):
         """ Constructor. Create all our attributes and initialize
         the game. """
+        self.start()
 
+    def start(self, room, level):
         self.score = 0
         self.game_over = False
 
@@ -246,47 +249,53 @@ class Game(object):
         self.collectable_list = pygame.sprite.Group()
         self.enemy_bullet_list = pygame.sprite.Group()
         self.enemy_melee_hit_list = pygame.sprite.Group()
+        self.portal_list = pygame.sprite.Group()
 
         # map file read
-        with open('lvl1.txt', 'r') as file:
-        # written to a list
+        with open('lvl11.txt', 'r') as file:
+            # written to a list
             self.lvlmap = file.readlines()
 
+        # Making Outside walls
         self.test = 1
         for x in range(1881):
             if x % 40 == 0:
-                self.wall = Wall(x, 0)
-                self.wall_list.add(self.wall)
-                self.all_sprites_list.add(self.wall)
-                self.wall = Wall(x, 1040)
-                self.wall_list.add(self.wall)
-                self.all_sprites_list.add(self.wall)
 
                 wall_x = x / 20
                 wall_y = 0
-                
-                self.map_replace(wall_x, wall_y, "O")
-                self.map_replace(wall_x+1, wall_y, "O")
-                self.map_replace(wall_x, wall_y+1, "O")
-                self.map_replace(wall_x+1, wall_y+1, "O")
 
-                wall_x = x / 20
+                if self.map_checker(wall_x, wall_y, "/"):
+                    self.wall = Wall(x, 0)
+                    self.wall_list.add(self.wall)
+                    self.all_sprites_list.add(self.wall)
+
+                    self.map_replace(wall_x, wall_y, "O")
+                    self.map_replace(wall_x + 1, wall_y, "O")
+                    self.map_replace(wall_x, wall_y + 1, "O")
+                    self.map_replace(wall_x + 1, wall_y + 1, "O")
+
                 wall_y = 52
 
-                self.map_replace(wall_x, wall_y, "O")
-                self.map_replace(wall_x+1, wall_y, "O")
-                self.map_replace(wall_x, wall_y+1, "O")
-                self.map_replace(wall_x+1, wall_y+1, "O")
+                if self.map_checker(wall_x, wall_y, "/"):
+                    self.wall = Wall(x, 1040)
+                    self.wall_list.add(self.wall)
+                    self.all_sprites_list.add(self.wall)
 
-                #self.lvlmap[x//20] = "O"
-               # self.lvlmap[(x // 20 )+ 1] = "O"
-                #self.lvlmap[(x // 20) + 96] = "O"
-               # self.lvlmap[(x // 20) + 1 + 96] = "O"
+                    self.map_replace(wall_x, wall_y, "O")
+                    self.map_replace(wall_x + 1, wall_y, "O")
+                    self.map_replace(wall_x, wall_y + 1, "O")
+                    self.map_replace(wall_x + 1, wall_y + 1, "O")
 
-               # self.lvlmap[x//20 + 96*52] = "O"
-                #self.lvlmap[(x // 20 + 96 * 52) + 96] = "O"
-               # self.lvlmap[(x // 20 + 96 * 52)+ 1] = "O"
-                #self.lvlmap[(x // 20 + 96 * 52) + 1 + 96] = "O"
+                # self.lvlmap[x//20] = "O"
+                # self.lvlmap[(x // 20 )+ 1] = "O"
+                # self.lvlmap[(x // 20) + 96] = "O"
+                # self.lvlmap[(x // 20) + 1 + 96] = "O"
+
+                # self.lvlmap[x//20 + 96*52] = "O"
+                # self.lvlmap[(x // 20 + 96 * 52) + 96] = "O"
+                # self.lvlmap[(x // 20 + 96 * 52)+ 1] = "O"
+                # self.lvlmap[(x // 20 + 96 * 52) + 1 + 96] = "O"
+
         for y in range(1041):
             if y % 40 == 0:
 
@@ -294,59 +303,55 @@ class Game(object):
                 wall_y = y / 20
 
                 if self.map_checker(wall_x, wall_y, "/"):
-
                     self.wall = Wall(0, y)
                     self.wall_list.add(self.wall)
                     self.all_sprites_list.add(self.wall)
 
-                    self.map_replace(wall_x, wall_y,"O")
-                    self.map_replace(wall_x+1, wall_y, "O")
-                    self.map_replace(wall_x, wall_y+1, "O")
-                    self.map_replace(wall_x+1, wall_y+1, "O")
+                    self.map_replace(wall_x, wall_y, "O")
+                    self.map_replace(wall_x + 1, wall_y, "O")
+                    self.map_replace(wall_x, wall_y + 1, "O")
+                    self.map_replace(wall_x + 1, wall_y + 1, "O")
 
                 wall_x = 95
 
                 if self.map_checker(wall_x, wall_y, "/"):
-
                     self.wall = Wall(1880, y)
                     self.wall_list.add(self.wall)
                     self.all_sprites_list.add(self.wall)
 
-                    self.map_replace(wall_x, wall_y,"O")
-                    self.map_replace(wall_x+1, wall_y, "O")
-                    self.map_replace(wall_x, wall_y+1, "O")
-                    self.map_replace(wall_x+1, wall_y+1, "O")
+                    self.map_replace(wall_x, wall_y, "O")
+                    self.map_replace(wall_x + 1, wall_y, "O")
+                    self.map_replace(wall_x, wall_y + 1, "O")
+                    self.map_replace(wall_x + 1, wall_y + 1, "O")
 
-                #if self.lvlmap[(y//20)*96] == "_":
-                                    #self.lvlmap[(y//20)*96] = "O"
-                    #self.lvlmap[((y // 20) * 96) + 1] = "O"
-                    #self.lvlmap[((y // 20) * 96) + 96] = "O"
-                    #self.lvlmap[((y // 20) * 96) + 1 + 96] = "O"
+                # if self.lvlmap[(y//20)*96] == "_":
+                # self.lvlmap[(y//20)*96] = "O"
+                # self.lvlmap[((y // 20) * 96) + 1] = "O"
+                # self.lvlmap[((y // 20) * 96) + 96] = "O"
+                # self.lvlmap[((y // 20) * 96) + 1 + 96] = "O"
 
-                    #self.lvlmap[95 + (y//20) * 96] = "O"
-                    #self.lvlmap[(95 + (y // 20) * 96) + 1] = "O"
-                    #self.lvlmap[(95 + (y // 20) * 96) + 96] = "O"
-                    #self.lvlmap[(95 + (y // 20) * 96) + 1 + 96] = "O"
-        #for x in range(1881):
-           # if x % 40 == 0:
-              #  r = random.randint(20)
-                   # if r == 0
-
+                # self.lvlmap[95 + (y//20) * 96] = "O"
+                # self.lvlmap[(95 + (y // 20) * 96) + 1] = "O"
+                # self.lvlmap[(95 + (y // 20) * 96) + 96] = "O"
+                # self.lvlmap[(95 + (y // 20) * 96) + 1 + 96] = "O"
+        # for x in range(1881):
+        # if x % 40 == 0:
+        #  r = random.randint(20)
+        # if r == 0
 
         # Create the block sprites
         # Creating Ranged Enemies
         for i in range(5):
 
-
-            x = random.randrange(40,1861)
-            y = random.randrange(40,1021)
+            x = random.randrange(40, 1861)
+            y = random.randrange(40, 1021)
 
             er_x = x // 20
-            er_y = y //20
+            er_y = y // 20
 
             # checking the entity map
             if not self.map_checker(er_x, er_y, "/"):
-            #if self.lvlmap[(x//20) + (y//20*96)] != "_":
+                # if self.lvlmap[(x//20) + (y//20*96)] != "_":
                 i -= 1
             else:
                 enemy_ranged = EnemyRanged()
@@ -358,14 +363,12 @@ class Game(object):
                 self.enemy_ranged_list.add(enemy_ranged)
 
                 self.map_replace(er_x, er_y, "r")
-                self.map_replace(er_x+1, er_y, "r")
-                self.map_replace(er_x, er_y+1, "r")
-                self.map_replace(er_x+1, er_y+1, "r")
+                self.map_replace(er_x + 1, er_y, "r")
+                self.map_replace(er_x, er_y + 1, "r")
+                self.map_replace(er_x + 1, er_y + 1, "r")
                 # self.lvlmap[(x//20) + (y//20 * 96)] = "er"
 
-
-
-        #creating meelee enemies
+        # creating meelee enemies
         for i in range(5):
 
             x = random.randrange(40, 1861)
@@ -376,7 +379,7 @@ class Game(object):
 
             # checking the entity map
             if not self.map_checker(em_x, em_y, "/"):
-            #if self.lvlmap[(x//20) + (y//20*96)] != "_":
+                # if self.lvlmap[(x//20) + (y//20*96)] != "_":
                 i -= 1
             else:
                 enemy_melee = EnemyMelee()
@@ -392,11 +395,10 @@ class Game(object):
                 self.map_replace(em_x + 1, em_y, "m")
                 self.map_replace(em_x, em_y + 1, "m")
                 self.map_replace(em_x + 1, em_y + 1, "m")
-                #self.lvlmap[(x//20) + (y//20 * 96)] = "em"
+                # self.lvlmap[(x//20) + (y//20 * 96)] = "em"
 
-
-        #Creating Collectables
-        for i in range(4):
+        # Creating Collectables
+        for i in range(3):
 
             x = random.randrange(40, 1861)
             y = random.randrange(40, 1021)
@@ -404,12 +406,12 @@ class Game(object):
             pu_x = x // 20
             pu_y = y // 20
 
-            #checking the entity map
+            # checking the entity map
             if not self.map_checker(pu_x, pu_y, "/"):
-            #if self.lvlmap[(x//20) + (y//20*96)] != "_":
+                # if self.lvlmap[(x//20) + (y//20*96)] != "_":
                 i -= 1
             else:
-                #self.lvlmap[(x//20) + (y//20 * 96)] = "pu"
+                # self.lvlmap[(x//20) + (y//20 * 96)] = "pu"
                 self.collectable = Collectable()
 
                 self.collectable.rect.x = x
@@ -422,6 +424,19 @@ class Game(object):
                 self.map_replace(pu_x + 1, pu_y, "c")
                 self.map_replace(pu_x, pu_y + 1, "c")
                 self.map_replace(pu_x + 1, pu_y + 1, "c")
+
+        # Creating Portal
+        for x in range(1881):
+            if x % 40 == 0:
+                for y in range(1041):
+                    if y % 40 == 0:
+                        po_x = x / 20
+                        po_y = y / 20
+                        # checking the entity map
+                        if self.map_checker(po_x, po_y, "p"):
+                            self.portal = Portal(x, y)
+                            self.portal_list.add(self.portal)
+                            self.all_sprites_list.add(self.portal)
 
         # Create the playerwa
         self.character = Character()
@@ -436,10 +451,8 @@ class Game(object):
 
         # Create Walls
 
-
-
-
         self.enemy_timer = 0  # Temporary thing for enemies shooting - should remove soon
+
 
     def process_events(self):
         """ Process all of the events. Return a "True" if we need
@@ -508,6 +521,7 @@ class Game(object):
             self.character.update(self.speed_x, self.speed_y)
 
             wall_hit_list = pygame.sprite.spritecollide(self.character, self.wall_list, False)
+            portal_hit_list = pygame.sprite.spritecollide(self.character, self.portal_list, False)
             player_enemy_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_list, False)
             player_collectable_hit_list = pygame.sprite.spritecollide(self.character, self.collectable_list, False)
             enemy_melee_hit_hit_list = pygame.sprite.spritecollide(self.character, self.enemy_melee_hit_list, False)
@@ -531,7 +545,18 @@ class Game(object):
                     enemy_bullet_hit_list[0].kill()
 
             if len(self.enemy_list) == 0:
-                self.game_over = True
+                #self.game_over = True
+                #add animation for the door opening
+                if portal_hit_list:
+                    #add amimation for loading new room
+                    for i in self.all_sprites_list:
+                        i.kill()
+                        self.start(room, level)
+
+
+
+
+
 
             if self.enemy_timer == 0:
                 for self.enemy_ranged in self.enemy_ranged_list:
@@ -702,16 +727,6 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         pygame.display.flip()
-
-
-
-
-
-
-
-
-
-
 
 def main():
     """ Main program function. """
