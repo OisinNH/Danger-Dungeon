@@ -25,7 +25,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BEIGE = (191, 175, 126)
 GREY = (128, 128, 128)
-PURPLE = (139,0,139)
+PURPLE = (139, 0, 139)
 BULLET_TRAVEL = 5
 
 SCREEN_WIDTH = 1920
@@ -47,6 +47,7 @@ class Enemy(pygame.sprite.Sprite):
         self.health = 100
         self.ranged = False
 
+
 class EnemyRanged(Enemy):
     def __init__(self):
         super().__init__()
@@ -59,11 +60,14 @@ class EnemyRanged(Enemy):
         self.rect.x += 0
         # self.shoot(game)
 
+
 class EnemyMelee(Enemy):
     def __init__(self):
         super().__init__()
+
     def hit(self):
         self.enemy_melee_hit = EnemyMelee_Hit(self.rect.centerx, self.rect.centery)
+
 
 class EnemyMelee_Hit(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -74,6 +78,7 @@ class EnemyMelee_Hit(pygame.sprite.Sprite):
         self.rect.centerx = x
         self.rect.centery = y
 
+
 class TextBox(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -83,27 +88,30 @@ class TextBox(pygame.sprite.Sprite):
         self.rect.centerx = x
         self.rect.centery = y
 
+
 class TextBox_Title(TextBox):
     def __init__(self, x, y):
-            super().__init__(x, y)
-            self.image = pygame.Surface([1250, 160])
-            self.rect = self.image.get_rect()
-            self.rect.centerx = x
-            self.rect.centery = y
+        super().__init__(x, y)
+        self.image = pygame.Surface([1250, 160])
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
 
 class TextBox_Options(TextBox):
     def __init__(self, x, y):
-            super().__init__(x, y)
-            self.image = pygame.Surface([250, 160])
-            self.rect = self.image.get_rect()
-            self.rect.centerx = x
-            self.rect.centery = y
+        super().__init__(x, y)
+        self.image = pygame.Surface([250, 160])
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
 
 class Character(pygame.sprite.Sprite):
     """ This class represents the player. """
 
     def __init__(self):
-        super().__init__()                   
+        super().__init__()
         self.image = pygame.Surface([20, 20])
         self.image.fill(RED)
         self.rect = self.image.get_rect()
@@ -120,6 +128,7 @@ class Character(pygame.sprite.Sprite):
         self.rect.x += x
         self.rect.y += y
 
+
 class Pointer(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -135,11 +144,13 @@ class Pointer(pygame.sprite.Sprite):
         self.rect.centerx = pos[0]
         self.rect.centery = pos[1]
 
+
 class PointerTitle(Pointer):
     def __init__(self, x, y):
         super().__init__(x, y)
 
         self.image = pygame.image.load("pointer2.png")
+
 
 class Collectable(pygame.sprite.Sprite):
     def __init__(self):
@@ -147,6 +158,7 @@ class Collectable(pygame.sprite.Sprite):
         self.image = pygame.Surface([40, 40])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
+
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -157,6 +169,7 @@ class Wall(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+
 class Portal(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -165,6 +178,7 @@ class Portal(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
@@ -204,6 +218,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
 
+
 class Enemy_Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, target_x, target_y):
         super().__init__()
@@ -230,10 +245,12 @@ class Game(object):
         reset the game we'd just need to create a new instance of this
         class. """
 
-    def __init__(self):
+    def __init__(self, room, level):
         """ Constructor. Create all our attributes and initialize
         the game. """
-        self.start()
+        self.room = room
+        self.level = level
+        self.start(self.room, self.level)
 
     def start(self, room, level):
         self.score = 0
@@ -251,8 +268,12 @@ class Game(object):
         self.enemy_melee_hit_list = pygame.sprite.Group()
         self.portal_list = pygame.sprite.Group()
 
+        self.level_file = "lvl"
+        self.level_file = self.level_file + str(level) + str(room) + ".txt"
+        print(self.level_file)
+
         # map file read
-        with open('lvl11.txt', 'r') as file:
+        with open(self.level_file, 'r') as file:
             # written to a list
             self.lvlmap = file.readlines()
 
@@ -453,7 +474,6 @@ class Game(object):
 
         self.enemy_timer = 0  # Temporary thing for enemies shooting - should remove soon
 
-
     def process_events(self):
         """ Process all of the events. Return a "True" if we need
             to close the window. """
@@ -463,7 +483,7 @@ class Game(object):
                 return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.game_over:
-                    self.__init__()
+                    self.start(1,1)
                 else:
                     self.character.shoot(self.pointer.rect.centerx, self.pointer.rect.centery)
                     self.bullet_list.add(self.character.bullet)
@@ -509,7 +529,6 @@ class Game(object):
                 for i in self.enemy_melee_hit_list:
                     i.kill
 
-
                 # Check the list of collisions.
                 for enemy_ranged in self.enemy_melee_hit_list:
                     self.score += 1
@@ -538,25 +557,28 @@ class Game(object):
                 player_collectable_hit_list[0].kill()
                 self.score += 10
             if enemy_melee_hit_hit_list:
-                    self.character.health -= 5
-                    enemy_melee_hit_hit_list[0].kill()
+                self.character.health -= 5
+                enemy_melee_hit_hit_list[0].kill()
             if enemy_bullet_hit_list:
-                    self.character.health -= 5
-                    enemy_bullet_hit_list[0].kill()
+                self.character.health -= 5
+                enemy_bullet_hit_list[0].kill()
 
             if len(self.enemy_list) == 0:
-                #self.game_over = True
-                #add animation for the door opening
+                # self.game_over = True
+                # add animation for the door opening
                 if portal_hit_list:
-                    #add amimation for loading new room
+                    # add amimation for loading new room
                     for i in self.all_sprites_list:
                         i.kill()
-                        self.start(room, level)
-
-
-
-
-
+                    if self.room < 6:
+                        self.room += 1
+                        self.start(self.room, self.level)
+                    elif self.room == 6:
+                        if self.level < 4:
+                            self.level = 1
+                            self.start(self.room, self.level)
+                        elif self.level == 4:
+                            self.game_over = True
 
             if self.enemy_timer == 0:
                 for self.enemy_ranged in self.enemy_ranged_list:
@@ -575,13 +597,13 @@ class Game(object):
             for self.enemy_bullet in self.enemy_bullet_list:
                 self.enemy_bullet.update()
 
-            #self.invincibility_timer -=1
+            # self.invincibility_timer -=1
             self.enemy_timer -= 1
             self.enemy_melee_timer -= 1
 
             self.pointer.update()
 
-            #22.02.2021 - adding game over for health
+            # 22.02.2021 - adding game over for health
             if self.character.health <= 0:
                 self.game_over = True
 
@@ -626,7 +648,7 @@ class Game(object):
         self.lvlmap_replace = "".join(self.lvlmap_replace_list)
         self.lvlmap[int(y)] = self.lvlmap_replace
 
-    def map_checker(self,x,y,target):
+    def map_checker(self, x, y, target):
         self.lvlmap_replace = self.lvlmap[int(y)]
         self.lvlmap_replace_list = list(self.lvlmap_replace)
 
@@ -635,10 +657,16 @@ class Game(object):
         else:
             return False
 
+
 class Title(object):
 
     def __init__(self, screen):
-        screen.fill(BEIGE)
+
+        # Adding Title background
+        self.image = pygame.image.load("Title.jpg")
+        self.rect = self.image.get_rect()
+        screen.blit(self.image, self.rect)
+
         # font = pygame.font.Font("Serif", 25)
         font = pygame.font.SysFont("Calibri", 100)
         text = font.render("Danger Dungeon - Click to Start", True, BLACK)
@@ -653,40 +681,38 @@ class Title(object):
         center_y = 1080 - ((SCREEN_HEIGHT // 4) - (text.get_height() // 4))
         screen.blit(text, [center_x, center_y])
 
-        #Creating Sprite Lists
+        # Creating Sprite Lists
         self.all_sprites_list = pygame.sprite.Group()
         self.textbox_title_list = pygame.sprite.Group()
         self.textbox_options_list = pygame.sprite.Group()
 
-        #Creating Title Box
+        # Creating Title Box
         self.textbox_title = TextBox_Title(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4)
-        #Below is commented out so text box is invisible
-        #self.all_sprites_list.add(self.textbox_title)
+        # Below is commented out so text box is invisible
+        # self.all_sprites_list.add(self.textbox_title)
         self.textbox_title_list.add(self.textbox_title)
 
-        #Creating Options Box
+        # Creating Options Box
         self.textbox_options = TextBox_Options(SCREEN_WIDTH // 2, (1080 - SCREEN_HEIGHT // 4))
         # Below is commented out so text box is invisible
         self.all_sprites_list.add(self.textbox_options)
         self.textbox_options_list.add(self.textbox_options)
 
-        #Creating Pointer
+        # Creating Pointer
         self.pointertitle = PointerTitle(960, 540)
         self.all_sprites_list.add(self.pointertitle)
 
-        #Music
+        # Music
         pygame.mixer.init()
         pygame.mixer.music.load("Title.mp3")
         pygame.mixer.music.play(-1)
 
-
         pygame.display.flip()
-
-
 
     def process_events(self, screen):
 
-        screen.fill(BEIGE)
+        screen.blit(self.image, self.rect)
+
         # Title
         font = pygame.font.SysFont("Calibri", 100)
         text = font.render("Danger Dungeon - Click to Start", True, BLACK)
@@ -694,11 +720,11 @@ class Title(object):
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 4)
         screen.blit(text, [center_x, center_y])
 
-        #Options
+        # Options
         font = pygame.font.SysFont("Calibri", 50)
         text = font.render("Options", True, BLACK)
         center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
-        center_y = 1080 -((SCREEN_HEIGHT // 4) - (text.get_height() // 4))
+        center_y = 1080 - ((SCREEN_HEIGHT // 4) - (text.get_height() // 4))
         screen.blit(text, [center_x, center_y])
 
         self.pointertitle.update()
@@ -716,7 +742,7 @@ class Title(object):
                     Title.options(screen)
                 else:
                     return False
-                
+
     def options(self, screen):
         screen.fill(BEIGE)
         # Title
@@ -727,6 +753,7 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         pygame.display.flip()
+
 
 def main():
     """ Main program function. """
@@ -743,15 +770,16 @@ def main():
     done = False
     clock = pygame.time.Clock()
 
-    #Title Screen
+    # Title Screen
     title = Title(screen)
     start = False
     while not start:
         start = title.process_events(screen)
 
-
     # Create an instance of the Game class
-    game = Game()
+    room = 1
+    level = 1
+    game = Game(room, level)
 
     # Main game loop
     while not done:
@@ -763,7 +791,6 @@ def main():
 
         # Draw the current frame
         game.display_frame(screen)
-
 
         # Pause for the next frame
         clock.tick(144)
