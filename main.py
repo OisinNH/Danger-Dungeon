@@ -821,12 +821,13 @@ class Title(object):
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.title_click_list:
-                    return True
+                    return 1
                 elif self.options_click_list:
-                    Title.options(screen)
+                    return 2
                 else:
-                    return False
-
+                    return 0
+            else:
+                return 0
     def options(self, screen):
         screen.fill(BEIGE)
         # Title
@@ -856,9 +857,14 @@ def main():
 
     # Title Screen
     title = Title(screen)
-    start = False
-    while not start:
-        start = title.process_events(screen)
+    title_screen_page = 0
+    while title_screen_page == 0:
+        title_screen_page = title.process_events(screen)
+    if title_screen_page == 2:
+        options_exit = False
+        while options_exit == False:
+            title.options(screen)
+
 
     # Create an instance of the Game class
     room = 1
