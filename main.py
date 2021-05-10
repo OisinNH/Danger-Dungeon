@@ -826,8 +826,7 @@ class Title(object):
                     return 2
                 else:
                     return 0
-            else:
-                return 0
+        return 0
     def options(self, screen):
         screen.fill(BEIGE)
         # Title
@@ -838,6 +837,21 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         pygame.display.flip()
+
+def Title_Loader(screen):
+    # Title Screen
+    title = Title(screen)
+    title_screen_page = 0
+    while title_screen_page == 0:
+        title_screen_page = title.process_events(screen)
+        if title_screen_page == 2:
+            options_exit = False
+            while options_exit == False:
+                options_exit = title.options(screen)
+            #endwhile
+            title_screen_page = 0
+        #Endif
+    #EndWhile
 
 
 def main():
@@ -855,16 +869,8 @@ def main():
     done = False
     clock = pygame.time.Clock()
 
-    # Title Screen
-    title = Title(screen)
-    title_screen_page = 0
-    while title_screen_page == 0:
-        title_screen_page = title.process_events(screen)
-    if title_screen_page == 2:
-        options_exit = False
-        while options_exit == False:
-            title.options(screen)
-
+    #Loading for Title Screen and Options
+    Title_Loader(screen)
 
     # Create an instance of the Game class
     room = 1
