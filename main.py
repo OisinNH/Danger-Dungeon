@@ -27,6 +27,9 @@ BEIGE = (191, 175, 126)
 GREY = (128, 128, 128)
 PURPLE = (139, 0, 139)
 BULLET_TRAVEL = 5
+PLAYER_CHARACTER_1 = pygame.image.load("Player_Character_1.png")
+PLAYER_CHARACTER_2= pygame.image.load("Player_Character_2.png")
+PLAYER_CHARACTER_3 = pygame.image.load("Player_Character_3.png")
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
@@ -124,6 +127,30 @@ class Character(pygame.sprite.Sprite):
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
+
+class Character_1(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_1)
+        self.health = 200
+        self.attack_modifier = 0.8
+
+class Character_2(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_2)
+        self.health = 70
+        self.attack_modifier = 1.2
+
+class Character_3(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_3)
+        self.health = 300
+        self.attack_modifier = 0.1
+
+
+
 
 
 class Pointer(pygame.sprite.Sprite):
@@ -242,7 +269,7 @@ class character_select_image(pygame.sprite.Sprite):
         self.image = pygame.image.load(character)
         self.rect = self.image.get_rect()
 
-        self.rect.centerx = x
+        self.rect.x = x
         self.rect.top = y
 
         print(character)
@@ -775,10 +802,6 @@ class Title(object):
         self.character_2_title_list = pygame.sprite.Group()
         self.character_3_title_list = pygame.sprite.Group()
 
-        # Creating Pointer
-        self.pointertitle = PointerTitle(960, 540)
-        self.all_sprites_list.add(self.pointertitle)
-
         # Character 1 Name
         font = pygame.font.SysFont("Calibri", 100)
         text = font.render("C1", True, BLACK)
@@ -787,8 +810,9 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         # Character 1 Photo
-        character_1 = character_select_image(center_x, center_y + 20, "C1.png")
+        character_1 = character_select_image(center_x, center_y + 200, "C1.png")
         self.character_1_title_list.add(character_1)
+        self.all_sprites_list.add(character_1)
 
         # Character 2 Name
         font = pygame.font.SysFont("Calibri", 100)
@@ -798,8 +822,10 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         # Character 2 Photo
-        character_2 = character_select_image(center_x, center_y + 20, "C2.png")
+        character_2 = character_select_image(center_x, center_y + 200, "C2.png")
         self.character_2_title_list.add(character_2)
+        self.all_sprites_list.add(character_2)
+
         # Character 3 Name
         font = pygame.font.SysFont("Calibri", 100)
         text = font.render("C3", True, BLACK)
@@ -808,29 +834,34 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         # Character 3 Photo
-        character_3 = character_select_image(center_x, center_y + 20, "C3.png")
+        character_3 = character_select_image(center_x, center_y + 200, "C3.png")
         self.character_3_title_list.add(character_3)
+        self.all_sprites_list.add(character_3)
+
+        # Creating Pointer
+        self.pointertitle = PointerTitle(960, 540)
+        self.all_sprites_list.add(self.pointertitle)
 
     def character_select_processes(self, screen):
         screen.blit(self.image, self.rect)
 
         # Character 1 Name
         font = pygame.font.SysFont("Calibri", 100)
-        text = font.render("C1", True, BLACK)
+        text = font.render("Jerry", True, BLACK)
         center_x = (SCREEN_WIDTH // 3) - (text.get_width() // 2)
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
         screen.blit(text, [center_x, center_y])
 
         #Character 2 Name
         font = pygame.font.SysFont("Calibri", 100)
-        text = font.render("C2", True, BLACK)
+        text = font.render("Tom", True, BLACK)
         center_x = (SCREEN_WIDTH //2) - (text.get_width() // 2)
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
         screen.blit(text, [center_x, center_y])
 
         #Character 3 Name
         font = pygame.font.SysFont("Calibri", 100)
-        text = font.render("C3", True, BLACK)
+        text = font.render("Clive", True, BLACK)
         center_x = SCREEN_WIDTH -((SCREEN_WIDTH // 3) + (text.get_width() // 2))
         center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
         screen.blit(text, [center_x, center_y])
@@ -872,6 +903,7 @@ def title_Loader(screen):
     character_selection = 0
     while character_selection == 0:
         character_selection = title.character_select_processes(screen)
+    return character_selection
 
 
 
