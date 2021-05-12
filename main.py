@@ -27,14 +27,14 @@ BEIGE = (191, 175, 126)
 GREY = (128, 128, 128)
 PURPLE = (139, 0, 139)
 BULLET_TRAVEL = 5
+PLAYER_CHARACTER_1 = pygame.image.load("Player_Character_1.png")
+PLAYER_CHARACTER_2= pygame.image.load("Player_Character_2.png")
+PLAYER_CHARACTER_3 = pygame.image.load("Player_Character_3.png")
 
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1080
 
-
 # --- Classes ---
-
-
 class Enemy(pygame.sprite.Sprite):
     """ This class represents a simple block the player collects. """
 
@@ -127,6 +127,30 @@ class Character(pygame.sprite.Sprite):
     def update(self, x, y):
         self.rect.x += x
         self.rect.y += y
+
+class Character_1(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_1)
+        self.health = 200
+        self.attack_modifier = 0.8
+
+class Character_2(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_2)
+        self.health = 70
+        self.attack_modifier = 1.2
+
+class Character_3(Character):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load(PLAYER_CHARACTER_3)
+        self.health = 300
+        self.attack_modifier = 0.1
+
+
+
 
 
 class Pointer(pygame.sprite.Sprite):
@@ -239,20 +263,32 @@ class Enemy_Bullet(pygame.sprite.Sprite):
         self.rect.x += self.bullet_movement_x
         self.rect.y += self.bullet_movement_y
 
+class character_select_image(pygame.sprite.Sprite):
+    def __init__(self, x, y, character):
+        super().__init__()
+        self.image = pygame.image.load(character)
+        self.rect = self.image.get_rect()
+
+        self.rect.x = x
+        self.rect.top = y
+
+        print(character)
+
 
 class Game(object):
     """ This class represents an instance of the game. If we need to
         reset the game we'd just need to create a new instance of this
         class. """
 
-    def __init__(self, room, level):
+    def __init__(self, screen, room, level, character):
         """ Constructor. Create all our attributes and initialize
         the game. """
+
         self.room = room
         self.level = level
-        self.start(self.room, self.level)
+        self.start( character, self.room, self.level)
 
-    def start(self, room, level):
+    def start(self, character, room, level):
         self.score = 0
         self.game_over = False
 
@@ -657,7 +693,6 @@ class Game(object):
         else:
             return False
 
-
 class Title(object):
 
     def __init__(self, screen):
@@ -731,17 +766,18 @@ class Title(object):
         self.all_sprites_list.draw(screen)
         pygame.display.flip()
 
-        title_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_title_list, False)
-        options_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_options_list, False)
+        self.title_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_title_list, False)
+        self.options_click_list = pygame.sprite.spritecollide(self.pointertitle, self.textbox_options_list, False)
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if title_click_list:
-                    return True
-                elif options_click_list:
-                    Title.options(screen)
+                if self.title_click_list:
+                    return 1
+                elif self.options_click_list:
+                    return 2
                 else:
-                    return False
+                    return 0
+        return 0
 
     def options(self, screen):
         screen.fill(BEIGE)
@@ -753,6 +789,122 @@ class Title(object):
         screen.blit(text, [center_x, center_y])
 
         pygame.display.flip()
+
+    def character_select(self, screen):
+        # Adding Title background
+        self.image = pygame.image.load("Title.jpg")
+        self.rect = self.image.get_rect()
+        screen.blit(self.image, self.rect)
+
+        # Creating Sprite Lists
+        self.all_sprites_list = pygame.sprite.Group()
+        self.character_1_title_list = pygame.sprite.Group()
+        self.character_2_title_list = pygame.sprite.Group()
+        self.character_3_title_list = pygame.sprite.Group()
+
+        # Character 1 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("C1", True, BLACK)
+        center_x = (SCREEN_WIDTH // 3) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        # Character 1 Photo
+        character_1 = character_select_image(center_x, center_y + 200, "C1.png")
+        self.character_1_title_list.add(character_1)
+        self.all_sprites_list.add(character_1)
+
+        # Character 2 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("C2", True, BLACK)
+        center_x = (SCREEN_WIDTH // 2) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        # Character 2 Photo
+        character_2 = character_select_image(center_x, center_y + 200, "C2.png")
+        self.character_2_title_list.add(character_2)
+        self.all_sprites_list.add(character_2)
+
+        # Character 3 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("C3", True, BLACK)
+        center_x = SCREEN_WIDTH - ((SCREEN_WIDTH // 3) + (text.get_width() // 2))
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        # Character 3 Photo
+        character_3 = character_select_image(center_x, center_y + 200, "C3.png")
+        self.character_3_title_list.add(character_3)
+        self.all_sprites_list.add(character_3)
+
+        # Creating Pointer
+        self.pointertitle = PointerTitle(960, 540)
+        self.all_sprites_list.add(self.pointertitle)
+
+    def character_select_processes(self, screen):
+        screen.blit(self.image, self.rect)
+
+        # Character 1 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Jerry", True, BLACK)
+        center_x = (SCREEN_WIDTH // 3) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        #Character 2 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Tom", True, BLACK)
+        center_x = (SCREEN_WIDTH //2) - (text.get_width() // 2)
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        #Character 3 Name
+        font = pygame.font.SysFont("Calibri", 100)
+        text = font.render("Clive", True, BLACK)
+        center_x = SCREEN_WIDTH -((SCREEN_WIDTH // 3) + (text.get_width() // 2))
+        center_y = (SCREEN_HEIGHT // 4) - (text.get_height() // 2)
+        screen.blit(text, [center_x, center_y])
+
+        self.pointertitle.update()
+        self.all_sprites_list.draw(screen)
+        pygame.display.flip()
+
+        self.character_1_click_list = pygame.sprite.spritecollide(self.pointertitle, self.character_1_title_list, False)
+        self.character_2_click_list = pygame.sprite.spritecollide(self.pointertitle, self.character_2_title_list, False)
+        self.character_3_click_list = pygame.sprite.spritecollide(self.pointertitle, self.character_3_title_list, False)
+
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.character_1_click_list:
+                    return 1
+                elif self.character_2_click_list:
+                    return 2
+                elif self.character_3_click_list:
+                    return 3
+                else:
+                    return 0
+        return 0
+
+def title_Loader(screen):
+    # Title Screen
+    title = Title(screen)
+    title_screen_page = 0
+    while title_screen_page == 0:
+        title_screen_page = title.process_events(screen)
+        if title_screen_page == 2:
+            options_exit = False
+            while options_exit == False:
+                options_exit = title.options(screen)
+            title_screen_page = 0
+
+    #Choose character
+    title.character_select(screen)
+    character_selection = 0
+    while character_selection == 0:
+        character_selection = title.character_select_processes(screen)
+    return character_selection
+
 
 
 def main():
@@ -770,16 +922,13 @@ def main():
     done = False
     clock = pygame.time.Clock()
 
-    # Title Screen
-    title = Title(screen)
-    start = False
-    while not start:
-        start = title.process_events(screen)
+    #Loading for Title Screen and Options
+    character = title_Loader(screen)
 
     # Create an instance of the Game class
     room = 1
     level = 1
-    game = Game(room, level)
+    game = Game(screen, room, level, character)
 
     # Main game loop
     while not done:
