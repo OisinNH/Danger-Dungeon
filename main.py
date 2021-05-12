@@ -128,29 +128,29 @@ class Character(pygame.sprite.Sprite):
         self.rect.x += x
         self.rect.y += y
 
+
 class Character_1(Character):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load(PLAYER_CHARACTER_1)
+        self.image = PLAYER_CHARACTER_1
         self.health = 200
         self.attack_modifier = 0.8
+
 
 class Character_2(Character):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load(PLAYER_CHARACTER_2)
+        self.image = PLAYER_CHARACTER_2
         self.health = 70
         self.attack_modifier = 1.2
+
 
 class Character_3(Character):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load(PLAYER_CHARACTER_3)
+        self.image = PLAYER_CHARACTER_3
         self.health = 300
         self.attack_modifier = 0.1
-
-
-
 
 
 class Pointer(pygame.sprite.Sprite):
@@ -263,6 +263,7 @@ class Enemy_Bullet(pygame.sprite.Sprite):
         self.rect.x += self.bullet_movement_x
         self.rect.y += self.bullet_movement_y
 
+
 class character_select_image(pygame.sprite.Sprite):
     def __init__(self, x, y, character):
         super().__init__()
@@ -286,9 +287,9 @@ class Game(object):
 
         self.room = room
         self.level = level
-        self.start( character, self.room, self.level)
+        self.start( character, self.room, self.level, character)
 
-    def start(self, character, room, level):
+    def start(self, character, room, level, character_start):
         self.score = 0
         self.game_over = False
 
@@ -495,8 +496,16 @@ class Game(object):
                             self.portal_list.add(self.portal)
                             self.all_sprites_list.add(self.portal)
 
-        # Create the playerwa
-        self.character = Character()
+        # Create the player
+        # Choosing the subclass
+        if character_start == 1:
+            self.character = Character_1()
+        elif character_start == 2:
+            self.character = Character_2()
+        elif character_start == 3:
+            self.character = Character_3()
+
+
         self.all_sprites_list.add(self.character)
         # Create Player Speed
         self.speed_x = 0
@@ -693,6 +702,7 @@ class Game(object):
         else:
             return False
 
+
 class Title(object):
 
     def __init__(self, screen):
@@ -886,6 +896,7 @@ class Title(object):
                     return 0
         return 0
 
+
 def title_Loader(screen):
     # Title Screen
     title = Title(screen)
@@ -904,7 +915,6 @@ def title_Loader(screen):
     while character_selection == 0:
         character_selection = title.character_select_processes(screen)
     return character_selection
-
 
 
 def main():
