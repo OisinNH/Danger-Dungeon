@@ -516,6 +516,19 @@ class Game(object):
         self.all_sprites_list.add(self.pointer)
 
         # Create Walls
+        for x in range(1881):
+            for y in range(1041):
+                if x % 40 == 0:
+                    if y % 40 == 0:
+                        pu_x = x // 20
+                        pu_y = y // 20
+
+                        # checking the entity map
+                        if self.map_checker(pu_x, pu_y, "w"):
+                            # if self.lvlmap[(x//20) + (y//20*96)] != "_":
+                            self.wall = Wall(x, y)
+                            self.wall_list.add(self.wall)
+                            self.all_sprites_list.add(self.wall)
 
         self.enemy_timer = 0  # Temporary thing for enemies shooting - should remove soon
 
@@ -565,7 +578,14 @@ class Game(object):
             # Move all the sprites
             # self.all_sprites_list.update()
             self.enemy_melee_timer = 0
+            if self.enemy_bullet_list:
+                for self.wall in self.wall_list:
+                    #Kill any bullets if they come into contact with a wall
+                    pygame.sprite.spritecollide(self.wall, self.enemy_bullet_list, True)
             if self.bullet_list:
+                for self.wall in self.wall_list:
+                    #Kill any bullets if they come into contact with a wall
+                    pygame.sprite.spritecollide(self.wall, self.bullet_list, True)
                 # See if the player's bullet has collided with anything.
                 enemies_hit_list = pygame.sprite.spritecollide(self.character.bullet, self.enemy_list, True)
                 for self.bullet in self.bullet_list:
