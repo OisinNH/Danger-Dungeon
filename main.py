@@ -49,8 +49,9 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class EnemyRanged(Enemy):
-    def __init__(self):
+    def __init__(self, game):
         super().__init__()
+        self.game = game
         self.ranged = True
 
     def shoot(self, target_x, target_y):
@@ -59,6 +60,17 @@ class EnemyRanged(Enemy):
     def update(self):
         self.rect.x += 0
         # self.shoot(game)
+
+    def move(self, x, y):
+        if not self.game.cannot_see(self.game.wall_list, x, y, self.game.character.rect.x, self.game.character.rect.y):
+            if self.rect.x > self.game.character.rect.x:
+                self.rect.x -= 0.5
+            else:
+                self.rect.x += 1
+            if self.rect.y > self.game.character.rect.y:
+                self.rect.y -= 0.5
+            else:
+                self.rect.y += 1
 
 
 class EnemyMelee(Enemy):
@@ -276,7 +288,7 @@ class character_select_image(pygame.sprite.Sprite):
         print(character)
 
 
-class Game(object):
+class Game:
     """ This class represents an instance of the game. If we need to
         reset the game we'd just need to create a new instance of this
         class. """
@@ -399,6 +411,8 @@ class Game(object):
 
         # Create the block sprites
         # Creating Ranged Enemies
+
+        #Creating Ranged Enemies
         for i in range(5):
 
             x = random.randrange(40, 1861)
@@ -412,7 +426,7 @@ class Game(object):
                 # if self.lvlmap[(x//20) + (y//20*96)] != "_":
                 i -= 1
             else:
-                enemy_ranged = EnemyRanged()
+                enemy_ranged = EnemyRanged(self)
                 enemy_ranged.rect.x = x
                 enemy_ranged.rect.y = y
 
@@ -618,6 +632,20 @@ class Game(object):
             if wall_hit_list:
                 self.character.rect.x = temp_character_x
                 self.character.rect.y = temp_character_y
+
+            for self.ranged_enemy in self.enemy_ranged_list:
+                "notes current enemy coords"
+                self.temp_enemy_ranged_x =self.ranged_enemy.rect.x
+                self.temp_enemy_ranged_y = self.ranged_enemy.rect.y
+
+                "move the enemy"
+                self.ranged_enemy.move(self.ranged_enemy.rect.centerx, self.ranged_enemy.rect.centery)
+
+                "checking if the enemy collides with a wall"
+                if pygame.sprite.spritecollide(self.ranged_enemy, self.wall_list, False):
+                    self.ranged_enemy.rect.x = self.temp_enemy_ranged_x
+                    self.ranged_enemy.rect.y = self.temp_enemy_ranged_y
+
             if player_collectable_hit_list:
                 player_collectable_hit_list[0].kill()
                 self.score += 10
@@ -667,6 +695,8 @@ class Game(object):
             self.enemy_melee_timer -= 1
 
             self.pointer.update()
+
+
 
             # 22.02.2021 - adding game over for health
             if self.character.health <= 0:
@@ -721,6 +751,14 @@ class Game(object):
             return True
         else:
             return False
+
+    def cannot_see(self, checked_list, x1, y1, x2, y2):
+        for checked in checked_list:
+            if checked.rect.clipline(x1,y1,x2,y2):
+                return True
+        return False
+
+
 
 
 class Title(object):
@@ -981,3 +1019,4 @@ def main():
 # Call the main function, start up the game
 if __name__ == "__main__":
     main()
+"passing rect.x to the sprie iself - unneeeded"
